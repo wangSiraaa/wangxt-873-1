@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0F172A;
+  --bg-panel: #1E293B;
+  --bg-card: #334155;
+  --accent-cyan: #06B6D4;
+  --accent-orange: #F59E0B;
+  --accent-red: #EF4444;
+  --accent-green: #10B981;
+  --accent-purple: #8B5CF6;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --border-glass: rgba(6, 182, 212, 0.2);
+
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC',
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
+    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(6, 182, 212, 0.10), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(139, 92, 246, 0.08), transparent 60%);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-bg-panel/70 backdrop-blur-md border border-border-glass rounded-xl;
+  }
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-card-float hover:-translate-y-0.5;
+  }
+  .btn {
+    @apply px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150
+           focus:outline-none focus:ring-2 focus:ring-accent-cyan/50 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-accent-cyan text-white hover:bg-accent-cyan/90 active:scale-[0.98];
+  }
+  .btn-success {
+    @apply btn bg-accent-green text-white hover:bg-accent-green/90 active:scale-[0.98];
+  }
+  .btn-warn {
+    @apply btn bg-accent-orange text-white hover:bg-accent-orange/90 active:scale-[0.98];
+  }
+  .btn-danger {
+    @apply btn bg-accent-red text-white hover:bg-accent-red/90 active:scale-[0.98];
+  }
+  .btn-ghost {
+    @apply btn bg-white/5 text-text-primary border border-white/10
+           hover:bg-white/10 active:scale-[0.98];
+  }
+  .chip {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium;
+  }
+  .status-led {
+    @apply w-2.5 h-2.5 rounded-full inline-block;
+  }
+  .form-input {
+    @apply w-full px-3 py-2 rounded-lg bg-bg-card/80 border border-white/10
+           text-text-primary placeholder-text-secondary/50 text-sm
+           focus:outline-none focus:border-accent-cyan/60 focus:ring-1 focus:ring-accent-cyan/40
+           transition-colors;
+  }
+  .form-input-error {
+    @apply border-accent-red/60 focus:border-accent-red focus:ring-accent-red/40;
+  }
+  .modal-backdrop {
+    @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in;
+  }
+  .modal-content {
+    @apply glass-panel w-full max-w-lg max-h-[90vh] overflow-y-auto animate-slide-up p-6;
+  }
+  .section-title {
+    @apply text-sm font-semibold text-text-primary flex items-center gap-2 mb-3;
+  }
+}
+
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.06  0 0 0 0 0.6  0 0 0 0 0.9  0 0 0 0.035 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+}
