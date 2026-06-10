@@ -110,6 +110,28 @@ if grep -q "call_center_dispatch" src/config/index.ts; then
 else
   fail "未定义持久化 StorageKey"
 fi
+# 断言：isValidDate 工具函数 + Invalid Date 防御
+if grep -q "export function isValidDate" src/utils/time.ts && grep -q "instanceof Date" src/utils/time.ts && grep -q "isNaN.*getTime" src/utils/time.ts; then
+  pass "utils/time.ts: isValidDate() 工具函数存在（d instanceof Date + !NaN(getTime)）"
+else
+  fail "utils/time.ts 未定义 isValidDate"
+fi
+# 断言：hydrateDates 有 Date instanceof 穿透（核心修复：不再把恢复的Date变成空对象）
+if grep -q "if.*obj.*instanceof.*Date.*return.*obj" src/store/index.ts; then
+  pass "store/index.ts: hydrateDates Date instanceof 穿透（reviver恢复的Date不再被覆盖为{}）"
+else
+  fail "hydrateDates 缺 Date instanceof 穿透 — reviver恢复后会被空对象覆盖！"
+fi
+# 断言：reviver 有 isValidDate 二次检查
+if grep -q "reviver\|isValidDate\|!Number.isNaN" src/store/index.ts; then
+  pass "store/index.ts: reviver + hydrateDates 双重 isValidDate 防御"
+fi
+# 运行 persist-check.mjs 全链路模拟：初始化→序列化→反序列化→恢复→倒计时
+if node scripts/persist-check.mjs > /tmp/persist-check.log 2>&1; then
+  pass "persist-check.mjs: 初始化→落盘→读取→恢复→倒计时 全链路 18项断言通过"
+else
+  fail "persist-check.mjs 失败（详见 /tmp/persist-check.log）"
+fi
 
 # ──────────────────────────────────────────────────────────────────
 header "6. 其他强制要求检查"

@@ -31,13 +31,18 @@ import {
 import { generateId } from '@/utils/id';
 import { STORAGE_KEY } from '@/config';
 import { exportRecordsToCSV } from '@/utils/csv';
-import { getSecondsSince } from '@/utils/time';
+import {
+  getSecondsSince,
+  isValidDate,
+  safeDate,
+} from '@/utils/time';
 
 function reviver(_key: string, value: unknown): unknown {
   if (typeof value === 'string') {
     const iso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
     if (iso.test(value)) {
-      return new Date(value);
+      const d = new Date(value);
+      if (isValidDate(d)) return d;
     }
   }
   return value;
@@ -53,6 +58,7 @@ const DATE_PATHS = [
 ];
 
 function hydrateDates(obj: unknown): unknown {
+  if (obj instanceof Date) return obj;
   if (Array.isArray(obj)) {
     return obj.map(hydrateDates);
   }
@@ -60,7 +66,8 @@ function hydrateDates(obj: unknown): unknown {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
       if (DATE_PATHS.includes(k) && typeof v === 'string') {
-        out[k] = new Date(v);
+        const d = new Date(v);
+        out[k] = isValidDate(d) ? d : v;
       } else {
         out[k] = hydrateDates(v);
       }
@@ -72,24 +79,38 @@ function hydrateDates(obj: unknown): unknown {
 
 function cloneCallWithFreshRelativeTiming(c: CallNumber): CallNumber {
   const now = Date.now();
+  const nowDate = new Date(now);
   const rebase = (d?: Date | null): Date | undefined => {
-    if (!d) return undefined;
+    if (d === null || d === undefined) return undefined;
+    if (!isValidDate(d)) return undefined;
     const elapsed = getSecondsSince(d);
-    return new Date(now - elapsed * 1000);
+    if (!Number.isFinite(elapsed) || elapsed < 0) return undefined;
+    const rebased = new Date(now - elapsed * 1000);
+    return isValidDate(rebased) ? rebased : undefined;
   };
+  const rebasedPoolTime = rebase(c.enterPoolTime) ?? nowDate;
+  const rebasedAssignTime = rebase(c.assignTime);
+  const rebasedFinishedAt = rebase(c.finishedAt);
   return {
     ...c,
-    enterPoolTime: rebase(c.enterPoolTime) || new Date(now),
-    assignTime: rebase(c.assignTime) || null,
-    finishedAt: rebase(c.finishedAt),
+    enterPoolTime: rebasedPoolTime,
+    assignTime: isValidDate(rebasedAssignTime) ? rebasedAssignTime : null,
+    finishedAt: isValidDate(rebasedFinishedAt) ? rebasedFinishedAt : undefined,
     transferRecords: c.transferRecords.map((t) => ({
       ...t,
-      transferredAt: rebase(t.transferredAt) || new Date(now),
+      transferredAt: rebase(t.transferredAt) ?? nowDate,
     })),
     upgradeRecord: c.upgradeRecord
       ? {
           ...c.upgradeRecord,
-          upgradeAt: rebase(c.upgradeRecord.upgradeAt) || new Date(now),
+          upgradeAt:
+            rebase(c.upgradeRecord.upgradeAt) ??
+            (isValidDate(c.upgradeRecord.upgradeAt)
+              ? c.upgradeRecord.upgradeAt
+              : nowDate),
+          waitSeconds: Number.isFinite(c.upgradeRecord.waitSeconds)
+            ? Math.max(0, c.upgradeRecord.waitSeconds)
+            : 0,
         }
       : undefined,
   };
