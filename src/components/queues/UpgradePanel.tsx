@@ -1,12 +1,14 @@
+import { useState, useMemo } from 'react';
 import { useAppStore } from '@/store';
 import { usePermission } from '@/hooks/usePermission';
 import { CallCard } from './CallCard';
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
-import { sortCallNumbers } from '@/rules';
+import { sortCallNumbers, applyQuickFilter } from '@/rules';
 import { useTimer } from '@/hooks/useTimer';
 import { getSecondsSince, formatDuration } from '@/utils/time';
 import { useConfig } from '@/config';
-import { UserRole } from '@/types';
+import { UserRole, QuickFilterState, DEFAULT_QUICK_FILTER } from '@/types';
+import { QuickFilter } from '../QuickFilter';
 
 export function UpgradePanel() {
   const upgradeQueue = useAppStore((s) => s.upgradeQueue);
@@ -18,7 +20,13 @@ export function UpgradePanel() {
   void tick;
   const { UPGRADE_THRESHOLD_SECONDS } = useConfig();
 
-  const sorted = [...upgradeQueue].sort(sortCallNumbers);
+  const [filter, setFilter] = useState<QuickFilterState>({ ...DEFAULT_QUICK_FILTER });
+
+  const filtered = useMemo(() => {
+    return applyQuickFilter(upgradeQueue, filter);
+  }, [upgradeQueue, filter]);
+
+  const sorted = [...filtered].sort(sortCallNumbers);
   const isMonitor = currentRole === UserRole.MONITOR;
 
   const totalOverdue = upgradeQueue.reduce(
@@ -42,6 +50,13 @@ export function UpgradePanel() {
           )}
         </span>
       </div>
+
+      <QuickFilter
+        filter={filter}
+        onChange={setFilter}
+        totalCount={upgradeQueue.length}
+        filteredCount={filtered.length}
+      />
 
       <div className={`text-[11px] mb-2 leading-relaxed ${
         isMonitor ? 'text-accent-red/80' : 'text-text-secondary/60'

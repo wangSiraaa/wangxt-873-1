@@ -177,3 +177,15 @@ export const FINISH_STATUS_OPTIONS: Array<{ value: CallStatus; label: string }> 
   { value: CallStatus.FINISHED, label: '已完成' },
   { value: CallStatus.TRANSFERRED_OUT, label: '已转出' },
 ];
+
+export interface QuickFilterState {
+  problemType: ProblemType | null;
+  customerLevel: CustomerLevel | null;
+  isHighPriority: boolean | null;
+}
+
+export const DEFAULT_QUICK_FILTER: QuickFilterState = {
+  problemType: null,
+  customerLevel: null,
+  isHighPriority: null,
+};

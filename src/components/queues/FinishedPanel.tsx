@@ -1,11 +1,20 @@
+import { useState, useMemo } from 'react';
 import { useAppStore } from '@/store';
 import { CallCard } from './CallCard';
 import { ClipboardList, ArrowRightLeft, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { formatTime } from '@/utils/time';
-import { CallStatus, CALL_STATUS_LABEL } from '@/types';
+import { CallStatus, CALL_STATUS_LABEL, QuickFilterState, DEFAULT_QUICK_FILTER } from '@/types';
+import { applyQuickFilter } from '@/rules';
+import { QuickFilter } from '../QuickFilter';
 
 export function FinishedPanel() {
   const finishedRecords = useAppStore((s) => s.finishedRecords);
+
+  const [filter, setFilter] = useState<QuickFilterState>({ ...DEFAULT_QUICK_FILTER });
+
+  const filtered = useMemo(() => {
+    return applyQuickFilter(finishedRecords, filter);
+  }, [finishedRecords, filter]);
 
   return (
     <div className="glass-panel p-4 flex-1 min-h-0 flex flex-col">
@@ -17,19 +26,26 @@ export function FinishedPanel() {
         </span>
       </div>
 
+      <QuickFilter
+        filter={filter}
+        onChange={setFilter}
+        totalCount={finishedRecords.length}
+        filteredCount={filtered.length}
+      />
+
       <div className="text-[11px] text-text-secondary/60 mb-2 leading-relaxed">
         已处理归档号码，含转派历史、升级记录和处理结果，可导出CSV
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 space-y-2">
-        {finishedRecords.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-text-secondary/50 py-12">
             <ClipboardList className="w-8 h-8 mb-2 opacity-40" />
             <p className="text-sm">暂无完成记录</p>
             <p className="text-xs mt-1 opacity-60">号码完成后会归档到此</p>
           </div>
         ) : (
-          finishedRecords.map((call) => {
+          filtered.map((call) => {
             const hasTransfer = call.transferRecords && call.transferRecords.length > 0;
             const hasUpgrade = !!call.upgradeRecord;
             return (

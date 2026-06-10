@@ -6,6 +6,7 @@ import {
   SkillTag,
   ProblemType,
   PROBLEM_TYPE_SKILLS,
+  QuickFilterState,
 } from '@/types';
 import {
   RECOMMEND_SCORE,
@@ -170,4 +171,27 @@ export function canUserOperateCall(
     return call.assignedAgentId === currentAgentId;
   }
   return false;
+}
+
+export function applyQuickFilter(
+  calls: CallNumber[],
+  filter: QuickFilterState,
+): CallNumber[] {
+  return calls.filter((call) => {
+    if (filter.problemType && call.problemType !== filter.problemType) {
+      return false;
+    }
+    if (filter.customerLevel && call.customerLevel !== filter.customerLevel) {
+      return false;
+    }
+    if (filter.isHighPriority !== null) {
+      if (filter.isHighPriority && !call.isHighPriority && !call.isBlacklisted) {
+        return false;
+      }
+      if (!filter.isHighPriority && (call.isHighPriority || call.isBlacklisted)) {
+        return false;
+      }
+    }
+    return true;
+  });
 }

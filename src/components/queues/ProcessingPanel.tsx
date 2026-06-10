@@ -1,8 +1,11 @@
+import { useState, useMemo } from 'react';
 import { useAppStore } from '@/store';
 import { usePermission } from '@/hooks/usePermission';
 import { CallCard } from './CallCard';
 import { ArrowRightLeft, CheckCircle, RefreshCcw } from 'lucide-react';
-import { sortCallNumbers } from '@/rules';
+import { sortCallNumbers, applyQuickFilter } from '@/rules';
+import { QuickFilter } from '../QuickFilter';
+import { QuickFilterState, DEFAULT_QUICK_FILTER } from '@/types';
 
 export function ProcessingPanel() {
   const processingQueue = useAppStore((s) => s.processingQueue);
@@ -12,7 +15,13 @@ export function ProcessingPanel() {
   const openFinishModal = useAppStore((s) => s.openFinishModal);
   const perm = usePermission(currentRole, currentAgentId);
 
-  const sorted = [...processingQueue].sort(sortCallNumbers);
+  const [filter, setFilter] = useState<QuickFilterState>({ ...DEFAULT_QUICK_FILTER });
+
+  const filtered = useMemo(() => {
+    return applyQuickFilter(processingQueue, filter);
+  }, [processingQueue, filter]);
+
+  const sorted = [...filtered].sort(sortCallNumbers);
 
   return (
     <div className="glass-panel p-4 flex-1 min-h-0 flex flex-col">
@@ -23,6 +32,13 @@ export function ProcessingPanel() {
           共 <span className="text-accent-green font-mono">{processingQueue.length}</span> 个
         </span>
       </div>
+
+      <QuickFilter
+        filter={filter}
+        onChange={setFilter}
+        totalCount={processingQueue.length}
+        filteredCount={filtered.length}
+      />
 
       <div className="text-[11px] text-text-secondary/60 mb-2 leading-relaxed">
         坐席正在处理的号码；可转派或完成；操作需验证身份与坐席状态

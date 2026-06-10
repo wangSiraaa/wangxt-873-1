@@ -1,11 +1,14 @@
+import { useState, useMemo } from 'react';
 import { useAppStore } from '@/store';
 import { usePermission } from '@/hooks/usePermission';
-import { sortCallNumbers } from '@/rules';
+import { sortCallNumbers, applyQuickFilter } from '@/rules';
 import { CallCard } from './CallCard';
 import { ArrowUpDown, UserPlus } from 'lucide-react';
 import { useConfig } from '@/config';
 import { useTimer } from '@/hooks/useTimer';
 import { getSecondsSince } from '@/utils/time';
+import { QuickFilter } from '../QuickFilter';
+import { QuickFilterState, DEFAULT_QUICK_FILTER } from '@/types';
 
 export function PoolPanel() {
   const poolQueue = useAppStore((s) => s.poolQueue);
@@ -17,7 +20,13 @@ export function PoolPanel() {
   const tick = useTimer(1000);
   void tick;
 
-  const sorted = [...poolQueue].sort(sortCallNumbers);
+  const [filter, setFilter] = useState<QuickFilterState>({ ...DEFAULT_QUICK_FILTER });
+
+  const filtered = useMemo(() => {
+    return applyQuickFilter(poolQueue, filter);
+  }, [poolQueue, filter]);
+
+  const sorted = [...filtered].sort(sortCallNumbers);
 
   const nearUpgrade = poolQueue.filter(
     (c) => getSecondsSince(c.enterPoolTime) >= UPGRADE_THRESHOLD_SECONDS - 30,
@@ -39,6 +48,13 @@ export function PoolPanel() {
           )}
         </span>
       </div>
+
+      <QuickFilter
+        filter={filter}
+        onChange={setFilter}
+        totalCount={poolQueue.length}
+        filteredCount={filtered.length}
+      />
 
       <div className="text-[11px] text-text-secondary/60 mb-2 leading-relaxed">
         排序规则：VIP高优 → 客户星级 → 入池时间；超过 {UPGRADE_THRESHOLD_SECONDS / 60} 分钟自动升级到班长
